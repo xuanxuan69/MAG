@@ -1,0 +1,71 @@
+
+
+##kneaddata -i 1005-17-001_R1_001.fastq -i 1005-17-001_R2_001.fastq -o 1005-17-001  --output-prefix 1005-17-001-1 -v --trimmomatic /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/share/trimmomatic-0.39-2/ --fastqc /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/bin/fastqc -db /osmgfs10000/home/fdeng/European_185/Pig_genome/ --reorder --trimmomatic-options "SLIDINGWINDOW:4:20 MINLEN:60" -t 20 --processes 20 --max-memory 256000m --remove-intermediate-output
+
+##spades.py --meta --only-assembler -1 6015-17-merge_paired_1.fastq -2 6015-17-merge_paired_2.fastq --threads 30 --memory 1000 -o ./6015-17-001_spades;
+
+##bowtie2 -1 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_1.fastq -2 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_2.fastq -p 20 -x /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta -S 1025-17-001.sam
+
+##samtools view -bS -@ 20 1025-17-001.sam -o 1025-17-001.bam
+
+##samtools sort -@ 20 -l 6 -O BAM 1025-17-001.bam -o 1025-17-001.sort.bam
+
+##bowtie2-build -f /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta contigs.fasta --threads 20
+
+##jgi_summarize_bam_contig_depths --outputDepth 6006-17-001.depth.txt 6006-17-001.sort.bam
+
+##metabat2 -t 30 -i 6006-17-001_spades/contigs.fasta -a 6006-17-001.depth.txt -o ./6006-17-001_binning -v
+
+##checkm lineage_wf -t 30 -x fa ./6015-17-001.binning/ ./6015-17-001_result/
+
+##dRep dereplicate clean -g bin/*.fa -sa 0.99  -p 40 
+
+
+
+##gtdbtk classify_wf --genome_dir /public1/home/scb4940/Yangboxuan/pig_60/ \
+--out_dir /public1/home/scb4940/Yangboxuan/pig_60/classify_wf \
+-- --prefix bin \
+--extension fna \
+--cpus 64 \
+--skip_ani_screen \
+
+
+
+##time gtdbtk infer \
+    --msa_file /public1/home/scb4940/Yangboxuan/GTDB/classify_wf/bin.bac120.user_msa.fasta \
+    --out_dir tree \
+    --cpus 64 \
+    --prefix bin
+
+##prodigal -a all.proteins.fasta -d all.nucleotides.fasta -f gff -p meta -o all -i combined.fa 
+
+##cd-hit-est -c 0.95 -G 0 -aS 0.9 -g 1 -T 50 -M 0 -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/all.nucleotides.fasta -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa
+
+##salmon index \
+  -t /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa \
+  -p 50 \
+  -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/index/
+
+##time salmon quantmerge \
+  --quants /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/*.quant \
+  --column TPM -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/out/gene.TPM
+
+##deeparg predict \
+    --model LS \
+    -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa \
+    -o /osmgfs10000/home/fdeng/European_185/Deeparg/all/ \
+    -d /osmgfs10000/home/fdeng/European_185/Deeparg/DeepARG_db/ \
+    --type nucl \
+    --min-prob 0.8 \
+    --arg-alignment-identity 30 \
+    --arg-alignment-evalue 1e-10 \
+    --arg-num-alignments-per-entry 1000
+
+##blastn \
+
+ -query all.fa_part_9 \
+ -db pig_virus.vOTUsdb \
+ -evalue  1e-5 \
+-outfmt 6 \
+ -out /osmgfs10000/home/fdeng/European_185/bingdu/result/fa_part_9_results \
+ -task blastn

@@ -1,0 +1,10 @@
+(binning)
+bowtie2 -1 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_1.fastq -2 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_2.fastq -p 20 -x /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta -S 1025-17-001.sam
+
+samtools view -bS -@ 20 1025-17-001.sam -o 1025-17-001.bam
+
+samtools sort -@ 20 -l 6 -O BAM 1025-17-001.bam -o 1025-17-001.sort.bam
+
+bowtie2-build -f /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta contigs.fasta --threads 20
+
+jgi_summarize_bam_contig_depths --outputDepth 6006-17-001.depth.txt 6006-17-001.sort.bam

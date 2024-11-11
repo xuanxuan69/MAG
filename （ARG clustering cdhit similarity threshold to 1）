@@ -1,0 +1,4 @@
+（ARG clustering cdhit similarity threshold to 1）
+cd-hit-est -c 1 -G 1 -aS 1 -g 1 -T 50 -M 0 \
+-i extracted_args.fasta \
+-o cdhit.fa

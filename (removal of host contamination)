@@ -1,0 +1,2 @@
+(removal of host contamination)
+kneaddata -i 1005-17-001_R1_001.fastq -i 1005-17-001_R2_001.fastq -o 1005-17-001  --output-prefix 1005-17-001-1 -v --trimmomatic /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/share/trimmomatic-0.39-2/ --fastqc /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/bin/fastqc -db /osmgfs10000/home/fdeng/European_185/Pig_genome/ --reorder --trimmomatic-options "SLIDINGWINDOW:4:20 MINLEN:60" -t 20 --processes 20 --max-memory 256000m --remove-intermediate-output

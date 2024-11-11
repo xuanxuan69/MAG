@@ -1,0 +1,55 @@
+（Retrieve Stands for ARGs in cluster（python)）
+# -*- coding: utf-8 -*-
+import csv  # 需要导入csv模块
+
+# 逐行读取 .clstr 文件并处理
+clstr_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/cdhit.fa.clstr"
+output_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/cdhitcontig/mapping_result.csv"
+contigs_id_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/cdhitcontig/contig.txt"
+
+# 读取包含代表序列的文件
+rep_seq_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/allid.txt"
+with open(rep_seq_file, 'r') as file:
+    representative_sequences = [line.strip() for line in file]
+
+# 初始化变量
+current_cluster_sequences = []
+current_representative = None
+
+# 打开输出文件和 contigs_id.txt 文件
+with open(output_file, 'w', newline='') as csvfile, open(contigs_id_file, 'w') as contigsfile:
+    fieldnames = ['Representative', 'Sequence']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # 逐行读取 .clstr 文件
+    with open(clstr_file, 'r') as file:
+        for line in file:
+            if line.startswith(">Cluster"):
+                # 写入前一个聚类的结果
+                if current_representative and current_representative in representative_sequences:
+                    for seq in current_cluster_sequences:
+                        writer.writerow({'Representative': current_representative, 'Sequence': seq})
+                        # 直接写入 Sequence 到 contigs_id.txt 文件
+                        contigsfile.write(f"{seq}\n")
+
+                # 每次遇到新 Cluster 时，重置当前代表序列和聚类序列列表
+                current_representative = None
+                current_cluster_sequences = []
+            else:
+                # 解析序列行
+                seq_info = line.split()
+                seq_name = seq_info[2].strip("...")  # 提取序列名称
+
+                # 将所有序列加入当前聚类的序列列表中
+                current_cluster_sequences.append(seq_name.strip(">"))
+
+                if "*" in seq_info[-1]:  # 检查是否是代表序列
+                    current_representative = seq_name.strip(">")
+
+        # 处理最后一个聚类
+        if current_representative and current_representative in representative_sequences:
+            for seq in current_cluster_sequences:
+                writer.writerow({'Representative': current_representative, 'Sequence': seq})
+                # 直接写入 Sequence 到 contigs_id.txt 文件
+                contigsfile.write(f"{seq}\n")

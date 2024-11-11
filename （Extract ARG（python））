@@ -1,0 +1,46 @@
+（Extract ARG（python））
+import pandas as pd
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+
+# 输入文件路径
+contigs_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/all.fasta"
+mapping_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/all.mapping.ARG"
+output_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/tiqu/extracted_args.fasta"
+
+# 读取mapping文件，确保read_id列为字符串类型
+mapping_df = pd.read_csv(mapping_file, sep="\t", header=0, dtype={"read_id": str})
+
+# 创建一个字典来存储 contig 的序列
+contigs_dict = SeqIO.to_dict(SeqIO.parse(contigs_file, "fasta"))
+
+# 准备保存提取的序列
+extracted_args = []
+
+# 遍历mapping信息，提取相应的序列片段
+for index, row in mapping_df.iterrows():
+    contig_id = row["read_id"]
+    start = int(row["query-start"]) - 1  # 转换为 0-based 索引
+    end = int(row["query-end"])
+    
+    # 检查contig是否在contigs文件中
+    if contig_id in contigs_dict:
+        full_sequence = contigs_dict[contig_id].seq
+        arg_sequence = full_sequence[start:end]
+        
+        # 创建SeqRecord对象
+        arg_record = SeqRecord(
+            Seq(str(arg_sequence)),
+            id=contig_id,
+            description=f"ARG region {start + 1}-{end}"
+        )
+        
+        # 添加到结果列表
+        extracted_args.append(arg_record)
+    else:
+        print(f"Warning: Contig {contig_id} not found in contigs file.")
+
+# 写入到输出文件
+SeqIO.write(extracted_args, output_file, "fasta")
+print(f"ARG sequences have been extracted and saved to {output_file}")

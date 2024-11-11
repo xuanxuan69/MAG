@@ -1,56 +1,70 @@
+(removal of host contamination)
+kneaddata -i 1005-17-001_R1_001.fastq -i 1005-17-001_R2_001.fastq -o 1005-17-001  --output-prefix 1005-17-001-1 -v --trimmomatic /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/share/trimmomatic-0.39-2/ --fastqc /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/bin/fastqc -db /osmgfs10000/home/fdeng/European_185/Pig_genome/ --reorder --trimmomatic-options "SLIDINGWINDOW:4:20 MINLEN:60" -t 20 --processes 20 --max-memory 256000m --remove-intermediate-output
 
+(assemble contigs)
+spades.py --meta --only-assembler -1 6015-17-merge_paired_1.fastq -2 6015-17-merge_paired_2.fastq --threads 30 --memory 1000 -o ./6015-17-001_spades;
 
-##kneaddata -i 1005-17-001_R1_001.fastq -i 1005-17-001_R2_001.fastq -o 1005-17-001  --output-prefix 1005-17-001-1 -v --trimmomatic /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/share/trimmomatic-0.39-2/ --fastqc /osmgfs10000/home/fdeng/miniconda3/envs/kneaddata/bin/fastqc -db /osmgfs10000/home/fdeng/European_185/Pig_genome/ --reorder --trimmomatic-options "SLIDINGWINDOW:4:20 MINLEN:60" -t 20 --processes 20 --max-memory 256000m --remove-intermediate-output
+(binning)
+bowtie2 -1 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_1.fastq -2 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_2.fastq -p 20 -x /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta -S 1025-17-001.sam
 
-##spades.py --meta --only-assembler -1 6015-17-merge_paired_1.fastq -2 6015-17-merge_paired_2.fastq --threads 30 --memory 1000 -o ./6015-17-001_spades;
+samtools view -bS -@ 20 1025-17-001.sam -o 1025-17-001.bam
 
-##bowtie2 -1 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_1.fastq -2 /osmgfs10000/home/fdeng/European_185/NL/1025-17-001-merge_paired_2.fastq -p 20 -x /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta -S 1025-17-001.sam
+samtools sort -@ 20 -l 6 -O BAM 1025-17-001.bam -o 1025-17-001.sort.bam
 
-##samtools view -bS -@ 20 1025-17-001.sam -o 1025-17-001.bam
+bowtie2-build -f /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta contigs.fasta --threads 20
 
-##samtools sort -@ 20 -l 6 -O BAM 1025-17-001.bam -o 1025-17-001.sort.bam
+jgi_summarize_bam_contig_depths --outputDepth 6006-17-001.depth.txt 6006-17-001.sort.bam
 
-##bowtie2-build -f /osmgfs10000/home/fdeng/European_185/NL/1025-17-merge_spades/contigs.fasta contigs.fasta --threads 20
+(conducted)
+metabat2 -t 30 -i 6006-17-001_spades/contigs.fasta -a 6006-17-001.depth.txt -o ./6006-17-001_binning -v
 
-##jgi_summarize_bam_contig_depths --outputDepth 6006-17-001.depth.txt 6006-17-001.sort.bam
+（quality assessment）
+checkm lineage_wf -t 30 -x fa ./6015-17-001.binning/ ./6015-17-001_result/
 
-##metabat2 -t 30 -i 6006-17-001_spades/contigs.fasta -a 6006-17-001.depth.txt -o ./6006-17-001_binning -v
+（dRep clustering）
+dRep dereplicate clean -g bin/*.fa -sa 0.99  -p 40 
 
-##checkm lineage_wf -t 30 -x fa ./6015-17-001.binning/ ./6015-17-001_result/
-
-##dRep dereplicate clean -g bin/*.fa -sa 0.99  -p 40 
-
-
-
-##gtdbtk classify_wf --genome_dir /public1/home/scb4940/Yangboxuan/pig_60/ \
+（GTDB annotation）
+gtdbtk classify_wf --genome_dir /public1/home/scb4940/Yangboxuan/pig_60/ \
 --out_dir /public1/home/scb4940/Yangboxuan/pig_60/classify_wf \
 -- --prefix bin \
 --extension fna \
 --cpus 64 \
 --skip_ani_screen \
 
-
-
-##time gtdbtk infer \
+（phylogenetic tree）
+time gtdbtk infer \
     --msa_file /public1/home/scb4940/Yangboxuan/GTDB/classify_wf/bin.bac120.user_msa.fasta \
     --out_dir tree \
     --cpus 64 \
     --prefix bin
 
-##prodigal -a all.proteins.fasta -d all.nucleotides.fasta -f gff -p meta -o all -i combined.fa 
+Genes annotation and quantification
 
-##cd-hit-est -c 0.95 -G 0 -aS 0.9 -g 1 -T 50 -M 0 -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/all.nucleotides.fasta -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa
+（prodigal  Genes annotation）
+prodigal -a all.proteins.fasta -d all.nucleotides.fasta -f gff -p meta -o all -i combined.fa 
 
-##salmon index \
+（cd-hit removes redundancy）
+cd-hit-est -c 0.95 -G 0 -aS 0.9 -g 1 -T 50 -M 0 -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/all.nucleotides.fasta -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa
+
+（salom quantification）
+salmon index \
   -t /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa \
   -p 50 \
   -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/index/
 
-##time salmon quantmerge \
+salmon quant \
+    -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/index/ -l A -p 50 --meta \
+    -1 /osmgfs10000/home/fdeng/European_185/BG/${id}_1.fastq \
+    -2 /osmgfs10000/home/fdeng/European_185/BG/${id}_2.fastq \
+    -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/${id}.quant
+
+time salmon quantmerge \
   --quants /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/*.quant \
   --column TPM -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/out/gene.TPM
 
-##deeparg predict \
+（DeepARG annotation）
+deeparg predict \
     --model LS \
     -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa \
     -o /osmgfs10000/home/fdeng/European_185/Deeparg/all/ \
@@ -61,11 +75,161 @@
     --arg-alignment-evalue 1e-10 \
     --arg-num-alignments-per-entry 1000
 
-##blastn \
+（mapped ARGs to MAGs(pyhton)）
+# -*- coding: utf-8 -*-
+import os
 
- -query all.fa_part_9 \
+def extract_fasta_sequences(input_fasta, target_sequence_ids_path, output_fasta):
+    # 读取目标序列ID
+    with open(target_sequence_ids_path, 'r') as file:
+        target_ids = set(line.strip() for line in file)
+
+    # 初始化变量以跟踪是否写入序列
+    write_sequence = False
+    
+    # 读取FASTA文件并提取目标序列
+    with open(input_fasta, 'r') as fasta_file, open(output_fasta, 'w') as output:
+        for line in fasta_file:
+            if line.startswith('>'):
+                # 检查序列ID是否在目标ID集中
+                sequence_id = line.split()[0][1:]
+                write_sequence = sequence_id in target_ids
+    
+            # 如果是目标序列，写入输出文件
+            if write_sequence:
+                output.write(line)
+# 文件路径
+
+input_fasta_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/my.fasta"
+target_sequence_ids_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/contigs/my_id.txt"
+output_fasta_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/contigs/extracted_my.fasta"
+
+# 调用函数
+
+extract_fasta_sequences(input_fasta_path, target_sequence_ids_path, output_fasta_path)
+
+
+## 提取ARG（python）
+import pandas as pd
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
+
+# 输入文件路径
+contigs_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/all.fasta"
+mapping_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/all.mapping.ARG"
+output_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/tiqu/extracted_args.fasta"
+
+# 读取mapping文件，确保read_id列为字符串类型
+mapping_df = pd.read_csv(mapping_file, sep="\t", header=0, dtype={"read_id": str})
+
+# 创建一个字典来存储 contig 的序列
+contigs_dict = SeqIO.to_dict(SeqIO.parse(contigs_file, "fasta"))
+
+# 准备保存提取的序列
+extracted_args = []
+
+# 遍历mapping信息，提取相应的序列片段
+for index, row in mapping_df.iterrows():
+    contig_id = row["read_id"]
+    start = int(row["query-start"]) - 1  # 转换为 0-based 索引
+    end = int(row["query-end"])
+    
+    # 检查contig是否在contigs文件中
+    if contig_id in contigs_dict:
+        full_sequence = contigs_dict[contig_id].seq
+        arg_sequence = full_sequence[start:end]
+        
+        # 创建SeqRecord对象
+        arg_record = SeqRecord(
+            Seq(str(arg_sequence)),
+            id=contig_id,
+            description=f"ARG region {start + 1}-{end}"
+        )
+        
+        # 添加到结果列表
+        extracted_args.append(arg_record)
+    else:
+        print(f"Warning: Contig {contig_id} not found in contigs file.")
+
+# 写入到输出文件
+SeqIO.write(extracted_args, output_file, "fasta")
+print(f"ARG sequences have been extracted and saved to {output_file}")
+
+（ARG clustering cdhit similarity threshold to 1）
+cd-hit-est -c 1 -G 1 -aS 1 -g 1 -T 50 -M 0 \
+-i extracted_args.fasta \
+-o cdhit.fa
+
+（Retrieve Stands for ARGs in cluster（python)）
+# -*- coding: utf-8 -*-
+import csv  # 需要导入csv模块
+
+# 逐行读取 .clstr 文件并处理
+clstr_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/cdhit.fa.clstr"
+output_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/cdhitcontig/mapping_result.csv"
+contigs_id_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/cdhitcontig/contig.txt"
+
+# 读取包含代表序列的文件
+rep_seq_file = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/Weissella_cibaria/contigs/allid.txt"
+with open(rep_seq_file, 'r') as file:
+    representative_sequences = [line.strip() for line in file]
+
+# 初始化变量
+current_cluster_sequences = []
+current_representative = None
+
+# 打开输出文件和 contigs_id.txt 文件
+with open(output_file, 'w', newline='') as csvfile, open(contigs_id_file, 'w') as contigsfile:
+    fieldnames = ['Representative', 'Sequence']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # 逐行读取 .clstr 文件
+    with open(clstr_file, 'r') as file:
+        for line in file:
+            if line.startswith(">Cluster"):
+                # 写入前一个聚类的结果
+                if current_representative and current_representative in representative_sequences:
+                    for seq in current_cluster_sequences:
+                        writer.writerow({'Representative': current_representative, 'Sequence': seq})
+                        # 直接写入 Sequence 到 contigs_id.txt 文件
+                        contigsfile.write(f"{seq}\n")
+
+                # 每次遇到新 Cluster 时，重置当前代表序列和聚类序列列表
+                current_representative = None
+                current_cluster_sequences = []
+            else:
+                # 解析序列行
+                seq_info = line.split()
+                seq_name = seq_info[2].strip("...")  # 提取序列名称
+
+                # 将所有序列加入当前聚类的序列列表中
+                current_cluster_sequences.append(seq_name.strip(">"))
+
+                if "*" in seq_info[-1]:  # 检查是否是代表序列
+                    current_representative = seq_name.strip(">")
+
+        # 处理最后一个聚类
+        if current_representative and current_representative in representative_sequences:
+            for seq in current_cluster_sequences:
+                writer.writerow({'Representative': current_representative, 'Sequence': seq})
+                # 直接写入 Sequence 到 contigs_id.txt 文件
+                contigsfile.write(f"{seq}\n")
+
+（Virus annotation）
+makeblastdb \
+ -dbtype nucl \
+ -in pig_virus.vOTUs.fa \
+ -input_type fasta \
+ -out pig_virus.vOTUsdb
+
+blastn \
+ -query all.fa_part \
  -db pig_virus.vOTUsdb \
  -evalue  1e-5 \
 -outfmt 6 \
- -out /osmgfs10000/home/fdeng/European_185/bingdu/result/fa_part_9_results \
+ -out /osmgfs10000/home/fdeng/European_185/bingdu/result/fa_results \
  -task blastn
+
+

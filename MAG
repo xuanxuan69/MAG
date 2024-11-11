@@ -109,7 +109,7 @@ output_fasta_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/contigs/e
 extract_fasta_sequences(input_fasta_path, target_sequence_ids_path, output_fasta_path)
 
 
-## 提取ARG（python）
+（Extract ARG（python））
 import pandas as pd
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord

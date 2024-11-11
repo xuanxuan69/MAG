@@ -1,0 +1,2 @@
+（cd-hit removes redundancy）
+cd-hit-est -c 0.95 -G 0 -aS 0.9 -g 1 -T 50 -M 0 -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/all.nucleotides.fasta -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa

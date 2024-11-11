@@ -1,0 +1,2 @@
+（prodigal  Genes annotation）
+prodigal -a all.proteins.fasta -d all.nucleotides.fasta -f gff -p meta -o all -i combined.fa 

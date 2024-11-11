@@ -1,0 +1,15 @@
+（salom quantification）
+salmon index \
+  -t /osmgfs10000/home/fdeng/European_185/prodigal/allpro/cdhit/all.fa \
+  -p 50 \
+  -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/index/
+
+salmon quant \
+    -i /osmgfs10000/home/fdeng/European_185/prodigal/allpro/index/ -l A -p 50 --meta \
+    -1 /osmgfs10000/home/fdeng/European_185/BG/${id}_1.fastq \
+    -2 /osmgfs10000/home/fdeng/European_185/BG/${id}_2.fastq \
+    -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/${id}.quant
+
+time salmon quantmerge \
+  --quants /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/*.quant \
+  --column TPM -o /osmgfs10000/home/fdeng/European_185/prodigal/allpro/salmon-quant/out/gene.TPM

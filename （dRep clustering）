@@ -1,0 +1,2 @@
+（dRep clustering）
+dRep dereplicate clean -g bin/*.fa -sa 0.99  -p 40 

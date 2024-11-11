@@ -1,0 +1,34 @@
+（mapped ARGs to MAGs(pyhton)）
+# -*- coding: utf-8 -*-
+import os
+
+def extract_fasta_sequences(input_fasta, target_sequence_ids_path, output_fasta):
+    # 读取目标序列ID
+    with open(target_sequence_ids_path, 'r') as file:
+        target_ids = set(line.strip() for line in file)
+
+    # 初始化变量以跟踪是否写入序列
+    write_sequence = False
+    
+    # 读取FASTA文件并提取目标序列
+    with open(input_fasta, 'r') as fasta_file, open(output_fasta, 'w') as output:
+        for line in fasta_file:
+            if line.startswith('>'):
+                # 检查序列ID是否在目标ID集中
+                sequence_id = line.split()[0][1:]
+                write_sequence = sequence_id in target_ids
+    
+            # 如果是目标序列，写入输出文件
+            if write_sequence:
+                output.write(line)
+# 文件路径
+
+input_fasta_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/my.fasta"
+target_sequence_ids_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/contigs/my_id.txt"
+output_fasta_path = "/osmgfs10000/home/fdeng/European_185/Deeparg/gene/contigs/extracted_my.fasta"
+
+# 调用函数
+
+extract_fasta_sequences(input_fasta_path, target_sequence_ids_path, output_fasta_path)
+
+

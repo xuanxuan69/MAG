@@ -1,0 +1,2 @@
+(assemble contigs)
+spades.py --meta --only-assembler -1 6015-17-merge_paired_1.fastq -2 6015-17-merge_paired_2.fastq --threads 30 --memory 1000 -o ./6015-17-001_spades;

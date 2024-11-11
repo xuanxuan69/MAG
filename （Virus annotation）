@@ -1,0 +1,14 @@
+（Virus annotation）
+makeblastdb \
+ -dbtype nucl \
+ -in pig_virus.vOTUs.fa \
+ -input_type fasta \
+ -out pig_virus.vOTUsdb
+
+blastn \
+ -query all.fa_part \
+ -db pig_virus.vOTUsdb \
+ -evalue  1e-5 \
+-outfmt 6 \
+ -out /osmgfs10000/home/fdeng/European_185/bingdu/result/fa_results \
+ -task blastn

@@ -1,0 +1,2 @@
+(conducted)
+metabat2 -t 30 -i 6006-17-001_spades/contigs.fasta -a 6006-17-001.depth.txt -o ./6006-17-001_binning -v

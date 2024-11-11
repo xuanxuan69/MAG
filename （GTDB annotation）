@@ -1,0 +1,14 @@
+（GTDB annotation）
+gtdbtk classify_wf --genome_dir /public1/home/scb4940/Yangboxuan/pig_60/ \
+--out_dir /public1/home/scb4940/Yangboxuan/pig_60/classify_wf \
+-- --prefix bin \
+--extension fna \
+--cpus 64 \
+--skip_ani_screen \
+
+（phylogenetic tree）
+time gtdbtk infer \
+    --msa_file /public1/home/scb4940/Yangboxuan/GTDB/classify_wf/bin.bac120.user_msa.fasta \
+    --out_dir tree \
+    --cpus 64 \
+    --prefix bin

@@ -1,0 +1,2 @@
+（quality assessment）
+checkm lineage_wf -t 30 -x fa ./6015-17-001.binning/ ./6015-17-001_result/
